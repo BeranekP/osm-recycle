@@ -1,13 +1,13 @@
-## Data quality check for recycling containers/centres
+# Data quality check for recycling containers/centres
 
 
-# Usage
+## Usage
 
 `go build`
 
 then run the executable.
 
-# Required
+## Required
 
 The app relies on osmtogejson for data conversion
 e.g. `npm install osmtogeojson`
