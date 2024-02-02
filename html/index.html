@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Czech Recycling Containers</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="icon/recycle.png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link href="css/style.css" rel="stylesheet">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script src="js/leaflet-heat.js"></script>
+</head>
+
+<body>
+    <div id="map"></div>
+</body>
+<SCript>
+    var map = L.map('map', { renderer: L.canvas() }).setView([50.034, 16.05], 8);
+
+
+
+    basep = map.createPane('base');
+    heatp = map.createPane('heat');
+    otherp = map.createPane('other');
+    fixmep = map.createPane('fixme');
+    map.getPane('base').style.zIndex = 200;
+    map.getPane('heat').style.zIndex = 400;
+    map.getPane('other').style.zIndex = 610;
+    map.getPane('fixme').style.zIndex = 640;
+
+
+    var heat = L.heatLayer([], { pane: 'heat', radius: 15, gradient: { 0.05: '#e5ffe5', 0.55: 'lime', 1: '#043927' }, minOpacity: 0.25 }).addTo(map);
+    var legend = L.control({ position: "bottomleft" });
+    var stats = L.control({ position: "bottomright" });
+    var layerControl = L.control.layers(null, null).addTo(map)
+    var total = 0
+    var woRecycling = 0
+    var timestamp
+
+    var geojsonMarkerOptions = {
+        radius: 8,
+        fillColor: "#000",
+        color: "#000",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8,
+        pane: "other"
+    };
+
+    var centreMarkerOptions = {
+        radius: 8,
+        fillColor: "#000",
+        color: "#000",
+        weight: 6,
+        opacity: 0.8,
+        fillOpacity: 0.1,
+        pane: "other"
+    };
+    var fixMeIcon = L.icon({
+        iconUrl: 'icon/fixme.png',
+        iconSize: [20, 20],
+    });
+
+    var missingIcon = L.icon({
+        iconUrl: 'icon/missing.png',
+        iconSize: [20, 20],
+    });
+
+
+    legend.onAdd = function (map) {
+        var div = L.DomUtil.create("div", "legend");
+        div.innerHTML += "<h4>Legend</h4>";
+        div.innerHTML += '<i style="background: #ee4035" id = "container"></i><span>Container</span><br>';
+        div.innerHTML += '<i style="outline-color: #ee4035" id = "centre"></i><span>Centre</span><br>';
+        div.innerHTML += '<i style="background: #ee4035"></i><span>Missing recycling</span><br>';
+        div.innerHTML += '<i  id="missing"></i><span>Missing container/centre</span><br>';
+        div.innerHTML += '<i style="background: #fdf498"></i><span>Suspicious color value</span><br>';
+        div.innerHTML += '<i style="background: #343d46"></i><span>Having address</span><br>';
+        div.innerHTML += '<i style="background: #0392cf"></i><span>Suspicious tags present</span><br>';
+        div.innerHTML += '<i id="fixme"></i><span>Fixme</span><br>';
+        div.innerHTML += '<i style="background: lime"></i><span>Container coverage</span><br>';
+        return div;
+    };
+
+
+    stats.onAdd = function (map) {
+        var div = L.DomUtil.create("div", "stats");
+        div.innerHTML += "<h4>Stats</h4>";
+        div.innerHTML += `<p><span id="total">Total: ${total}</span><p>`;
+        div.innerHTML += `<p><span id="woRec">Without recycling: ${woRecycling}</span><p>`;
+        div.innerHTML += `<p><span id="tstamp">${timestamp}</span><p>`;
+        return div;
+    }
+
+
+
+    legend.addTo(map);
+    stats.addTo(map);
+
+    osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        pane: "base",
+        maxZoom: 20,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    })
+    osm.addTo(map);
+    var data
+
+    var handles = []
+
+
+
+    function addContainer(path, color, title) {
+        var handle
+        fetch(path, { mode: "cors" }).then(r => r.json()).then(j => data = j).then((data) => {
+            if (data.features) {
+                handle = L.geoJSON(data, {
+                    pane: "other",
+                    onEachFeature: onEachFeature,
+
+                    pointToLayer: function (feature, latlng) {
+                        if (feature.properties.recycling_type == "centre") {
+                            return L.circleMarker(latlng, centreMarkerOptions);
+                        }
+                        return L.circleMarker(latlng, geojsonMarkerOptions);
+                    },
+                    style: function (feature) {
+                        if (feature.properties.recycling_type == "centre") {
+                            return { color: color }
+                        }
+
+                        return { fillColor: color };
+
+                    }
+
+                })
+                //overlayMaps[title] = handle
+                layerControl.addOverlay(handle, title);
+                handle.addTo(map);
+                handles.push(handle)
+            }
+        })
+
+    }
+
+    var fg = new L.featureGroup();
+
+
+    function addCustom(path, title, icon) {
+        var handle
+        fetch(path, { mode: "cors" }).then(r => r.json()).then(j => data = j).then((data) => {
+            if (data.features) {
+                handle = L.geoJSON(data, {
+                    pane: "fixme",
+                    onEachFeature: onEachFeature,
+
+                    pointToLayer: function (feature, latlng) {
+                        return L.marker(latlng, { icon: icon, pane: "fixme" });
+
+
+                    },
+
+
+                })
+                //overlayMaps[title] = handle
+                layerControl.addOverlay(handle, title);
+                handle.addTo(map);
+                handles.push(handle)
+            }
+        })
+
+    }
+
+    function addHeat(path, title) {
+
+        fetch(path, { mode: "same-origin" }).then(r => r.json()).then(j => data = j).then((data) => {
+            for (c of data.features) {
+                [lat, long] = [c.geometry.coordinates[0], c.geometry.coordinates[1]]
+                heat.addLatLng([long, lat])
+
+            }
+        })
+        layerControl.addOverlay(heat, title);
+    }
+
+
+
+    addHeat("/geojson/containers.geojson", title = "Container coverage")
+    addContainer("/geojson/missingRecycling.geojson", "#ee4035", title = "Missing recycling")
+    addContainer("geojson/suspiciousColor.geojson", "#fdf498", title = "Suspicious color")
+    addContainer("geojson/withAddress.geojson", "#343d46", title = "With address")
+    addContainer("/geojson/suspiciousTags.geojson", "#0392cf", title = "Suspiciou tags")
+    addCustom("/geojson/fixMe.geojson", "Fixme", fixMeIcon)
+    addCustom("/geojson/missingType.geojson", "Missing type", missingIcon)
+
+    var baseMaps = {
+        "OpenStreetMap": osm,
+    };
+
+    //var layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+    function onEachFeature(feature, layer) {
+        // does this feature have a property named popupContent?
+        if (feature.id && feature.status && feature.properties) {
+            popUp = `<b>${feature.properties["recycling_type"].toUpperCase() || "unknown".toUpperCase()}</b>: <a href=http://openstreetmap.org/${feature.id} target="_blank" rel="noopener noreferrer">${feature.id}</a><ul>`
+            if (feature.properties["fixme"]) {
+                popUp += `<p> <b>! ${feature.properties["fixme"]} !</b></p>`
+            }
+            for (prop in feature.properties) {
+                popUp += `<li>${prop}: ${feature.properties[prop]}</li>`
+            }
+            if (feature.suspicious) {
+                popUp += `<li> suspicious:<b> ${feature.suspicious} </b></li>`
+            }
+            popUp += "</ul>"
+
+            layer.bindPopup(popUp);
+        }
+    }
+
+
+
+    function getStats() {
+        fetch("/geojson/stats.json", { mode: "same-origin" }).then(r => r.json()).then(j => data = j).then((data) => {
+            timeUnix = data.Timestamp
+            total = data.Total
+            woRecycling = data.MissingRecycling
+            totalSpan = document.getElementById("total")
+            totalSpan.innerHTML = `Total: <b>${total}<b>`
+
+            woRec = document.getElementById("woRec")
+            woRec.innerHTML = `Without recycling: <b>${woRecycling}</b>`
+
+            timestamp = new Date(timeUnix).toLocaleString("en-En")
+            tstamp = document.getElementById("tstamp")
+            tstamp.innerHTML = `${timestamp}`
+        })
+
+    }
+    getStats()
+
+
+</SCript>
+
+</html>
