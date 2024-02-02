@@ -8,6 +8,7 @@
 then run the executable.
 
 #Required
+
 The app relies on osmtogejson for data conversion
 e.g. `npm install osmtogeojson`
 
