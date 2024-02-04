@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 )
 
@@ -16,25 +16,34 @@ func ConvertData() {
 		FetchData()
 	}
 
-	source, err := filepath.Abs("data/containers.json")
+	sourcePath, err := filepath.Abs("data/containers.json")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	target, _ := filepath.Abs("data/containers.geojson")
-	_, err = os.OpenFile(target, os.O_CREATE, 0666)
+	targetPath, _ := filepath.Abs("data/containers.geojson")
+	_, err = os.OpenFile(targetPath, os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//defer file.Close()
 
-	//	query := fmt.Sprintf("%s > %s", source, target)
-
-	cmd := exec.Command("osmtogeojson", source)
-	out, err := cmd.Output()
+	source, err := os.ReadFile(sourcePath)
 	if err != nil {
-		log.Fatal("Error running osmtogeojson", err)
+		log.Fatal(err)
 	}
-	os.WriteFile(target, out, 0666)
+	var r ResponseData
+
+	err = json.Unmarshal(source, &r)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	geojson := Json2GeoJson(r)
+    out, err:=json.MarshalIndent(geojson, "", " ")
+    if err!=nil{
+    log.Fatal(err)
+    }
+
+	os.WriteFile(targetPath, out, 0666)
 
 }

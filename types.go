@@ -15,9 +15,15 @@ type Container struct {
 	Lat      float32           `json:"lat,omitempty"`
 	Lon      float32           `json:"lon,omitempty"`
 	Tags     map[string]string `json:"tags"`
-	Geometry interface{}       `json:"geometry,omitempty"`
-	Center   interface{}       `json:"center,omitempty"`
+	Center   Center       `json:"center,omitempty"`
 }
+
+
+type Center struct {
+    Lon float32 `json:"lon,omitempty"`
+    Lat float32 `json:"lat,omitempty"`
+}
+
 
 type TimeStamps struct {
 	TimestampOsmBase   string
