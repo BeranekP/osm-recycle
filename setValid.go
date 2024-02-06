@@ -90,7 +90,7 @@ func validKeys(props map[string]string, c *GeoContainer) bool {
 		"description", "check_date:recycling", "ref", "indoor", "collection_times",
 		"colour", "check_date", "source:amenity", "website", "note", "material",
 		"operator:website", "temporary", "mapillary", "operator:type", "email", "fixme",
-        "phone", "mobile", "landuse", "image", "start_date"}
+        "phone", "mobile", "landuse", "image", "start_date", "fee"}
 	for key, _ := range props {
 		if !(strings.HasPrefix(key, "recycling:") ||
 			slices.Contains(valid, key) ||
@@ -103,7 +103,8 @@ func validKeys(props map[string]string, c *GeoContainer) bool {
 			strings.HasPrefix(key, "ipr:") ||
 			strings.HasPrefix(key, "survey:") ||
 			strings.HasPrefix(key, "source:") ||
-			strings.HasPrefix(key, "check_date:")) {
+			strings.HasPrefix(key, "check_date:")||
+            strings.HasPrefix(key, "payment:")) {
 			//fmt.Println(key, value)
 			c.Suspicious += key
 			return false

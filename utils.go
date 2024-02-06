@@ -86,8 +86,8 @@ func ValidateData() {
 	output := OutputData{
 		"missingRecycling": missingRecycling,
 		"missingType":      missingType,
-		"suspicousTags":    suspicousTags,
-		"suspicousColor":   suspicousColor,
+		"suspiciousTags":    suspicousTags,
+		"suspiciousColor":   suspicousColor,
 		"withAddress":      withAddress,
 		"fixMe":            fixMe,
 		"stats":            stats,
