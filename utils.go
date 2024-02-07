@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,32 +14,41 @@ import (
 )
 
 func Update(w http.ResponseWriter, r *http.Request) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println(".env not found using system")
-	}
+	if r.Method == "POST" {
 
-	fmt.Println("--------------------")
-	log.Println("Updating data")
-	token := r.URL.Query().Get("token")
-	if token != "" {
-		systok := os.Getenv("TOKEN")
-		valid := token == systok
-		if valid {
-			FetchData()
-			ConvertData()
-			ValidateData()
-			fmt.Fprint(w, http.StatusOK)
-			fmt.Println("--------------------")
-			return
+		err := godotenv.Load()
+		if err != nil {
+			log.Println(".env not found using system")
+		}
 
+		fmt.Println("--------------------")
+		log.Println("Updating data")
+		token := r.FormValue("token")
+		if token != "" {
+			hasher := sha512.New()
+			hasher.Write([]byte(token))
+			hashed := hex.EncodeToString(hasher.Sum(nil))
+
+			systok := os.Getenv("TOKEN")
+			valid := hashed == systok
+			if valid {
+				FetchData()
+				ConvertData()
+				ValidateData()
+				fmt.Fprint(w, http.StatusOK)
+				fmt.Println("--------------------")
+				return
+
+			}
 		}
 	}
+	log.Println("Invalid request")
 	fmt.Fprint(w, http.StatusForbidden)
 
 }
 
 func ServeData() {
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Println(".env not found using system")
@@ -82,12 +93,14 @@ func ValidateData() {
 	fixMe, _ := json.MarshalIndent(checked.fixMe, "", " ")
 	stats, _ := json.MarshalIndent(checked.Stats, "", " ")
 	missingType, _ := json.MarshalIndent(checked.missingType, "", " ")
+	missingAmenity, _ := json.MarshalIndent(checked.missingAmenity, "", " ")
 
 	output := OutputData{
 		"missingRecycling": missingRecycling,
 		"missingType":      missingType,
-		"suspiciousTags":    suspicousTags,
-		"suspiciousColor":   suspicousColor,
+		"missingAmenity":   missingAmenity,
+		"suspiciousTags":   suspicousTags,
+		"suspiciousColor":  suspicousColor,
 		"withAddress":      withAddress,
 		"fixMe":            fixMe,
 		"stats":            stats,
@@ -103,7 +116,7 @@ func ValidateData() {
 	}
 }
 func FilesExist() bool {
-	var validated []string = []string{"containers", "missingType", "missingRecycling", "withAddress", "fixMe", "suspiciousTags", "suspiciousColor"}
+	var validated []string = []string{"containers", "missingType", "missingRecycling", "missingAmenity", "withAddress", "fixMe", "suspiciousTags", "suspiciousColor"}
 
 	for _, file := range validated {
 		path := fmt.Sprintf("data/%s.geojson", file)

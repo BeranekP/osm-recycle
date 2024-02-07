@@ -17,6 +17,8 @@ func setValid(data *GeoJson) CheckedData {
 	withAddress := GeoJson{Type: "FeatureCollection"}
 	fixMe := GeoJson{Type: "FeatureCollection"}
 	missingType := GeoJson{Type: "FeatureCollection"}
+	missingAmenity := GeoJson{Type: "FeatureCollection"}
+
 	var stats Stats
 	stats.Timestamp = time.Now().UnixMilli()
 
@@ -50,6 +52,9 @@ func setValid(data *GeoJson) CheckedData {
 			stats.MissingRecycling += 1
 
 		}
+        if container.Properties["amenity"] != "recycling"{
+            missingAmenity.Features = append(missingAmenity.Features, *container)
+        }
 
 		if !validKeys(container.Properties, container) {
 			if container.Properties["recycling_type"] == "centre" && (container.Properties["barrier"] == "fence" || container.Properties["barrier"] == "wall") {
@@ -81,7 +86,7 @@ func setValid(data *GeoJson) CheckedData {
 		}
 
 	}
-	return CheckedData{missingRecycling, missingType, suspiciousTags, suspiciousColor, withAddress, fixMe, stats}
+	return CheckedData{missingRecycling, missingType, missingAmenity, suspiciousTags, suspiciousColor, withAddress, fixMe, stats}
 }
 
 func validKeys(props map[string]string, c *GeoContainer) bool {
@@ -90,7 +95,7 @@ func validKeys(props map[string]string, c *GeoContainer) bool {
 		"description", "check_date:recycling", "ref", "indoor", "collection_times",
 		"colour", "check_date", "source:amenity", "website", "note", "material",
 		"operator:website", "temporary", "mapillary", "operator:type", "email", "fixme",
-        "phone", "mobile", "landuse", "image", "start_date", "fee"}
+		"phone", "mobile", "landuse", "image", "start_date", "fee", "industrial"}
 	for key, _ := range props {
 		if !(strings.HasPrefix(key, "recycling:") ||
 			slices.Contains(valid, key) ||
@@ -103,8 +108,8 @@ func validKeys(props map[string]string, c *GeoContainer) bool {
 			strings.HasPrefix(key, "ipr:") ||
 			strings.HasPrefix(key, "survey:") ||
 			strings.HasPrefix(key, "source:") ||
-			strings.HasPrefix(key, "check_date:")||
-            strings.HasPrefix(key, "payment:")) {
+			strings.HasPrefix(key, "check_date:") ||
+			strings.HasPrefix(key, "payment:")) {
 			//fmt.Println(key, value)
 			c.Suspicious += key
 			return false

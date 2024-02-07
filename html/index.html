@@ -77,6 +77,7 @@
         div.innerHTML += '<i style="background: #ee4035" id = "container"></i><span>Container</span><br>';
         div.innerHTML += '<i style="outline-color: #ee4035" id = "centre"></i><span>Centre</span><br>';
         div.innerHTML += '<i style="background: #ee4035"></i><span>Missing recycling</span><br>';
+        div.innerHTML += '<i style="background: #542609"></i><span>Missing/wrong amenity</span><br>';
         div.innerHTML += '<i  id="missing"></i><span>Missing container/centre</span><br>';
         div.innerHTML += '<i style="background: #fdf498"></i><span>Suspicious color value</span><br>';
         div.innerHTML += '<i style="background: #343d46"></i><span>Having address</span><br>';
@@ -138,7 +139,8 @@
 
                 })
                 //overlayMaps[title] = handle
-                layerControl.addOverlay(handle, title);
+                if (data.features){
+                    layerControl.addOverlay(handle, title);}
                 handle.addTo(map);
                 handles.push(handle)
             }
@@ -192,7 +194,8 @@
     addContainer("/geojson/missingRecycling.geojson", "#ee4035", title = "Missing recycling")
     addContainer("geojson/suspiciousColor.geojson", "#fdf498", title = "Suspicious color")
     addContainer("geojson/withAddress.geojson", "#343d46", title = "With address")
-    addContainer("/geojson/suspiciousTags.geojson", "#0392cf", title = "Suspiciou tags")
+    addContainer("/geojson/suspiciousTags.geojson", "#0392cf", title = "Suspicious tags")
+    addContainer("/geojson/missingAmenity.geojson", "#542609", title = "Missing/Wrong amenity")
     addCustom("/geojson/fixMe.geojson", "Fixme", fixMeIcon)
     addCustom("/geojson/missingType.geojson", "Missing type", missingIcon)
 

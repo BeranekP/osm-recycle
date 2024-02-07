@@ -9,21 +9,19 @@ type Status struct {
 }
 
 type Container struct {
-	Type     string            `json:"type"`
-	Id       int               `json:"id"`
-	Nodes    []int             `json:"nodes,omitempty"`
-	Lat      float32           `json:"lat,omitempty"`
-	Lon      float32           `json:"lon,omitempty"`
-	Tags     map[string]string `json:"tags"`
-	Center   Center       `json:"center,omitempty"`
+	Type   string            `json:"type"`
+	Id     int               `json:"id"`
+	Nodes  []int             `json:"nodes,omitempty"`
+	Lat    float32           `json:"lat,omitempty"`
+	Lon    float32           `json:"lon,omitempty"`
+	Tags   map[string]string `json:"tags"`
+	Center Center            `json:"center,omitempty"`
 }
-
 
 type Center struct {
-    Lon float32 `json:"lon,omitempty"`
-    Lat float32 `json:"lat,omitempty"`
+	Lon float32 `json:"lon,omitempty"`
+	Lat float32 `json:"lat,omitempty"`
 }
-
 
 type TimeStamps struct {
 	TimestampOsmBase   string
@@ -60,6 +58,7 @@ type GeoContainer struct {
 type CheckedData struct {
 	missingRecycling GeoJson
 	missingType      GeoJson
+	missingAmenity   GeoJson
 	suspiciousTags   GeoJson
 	suspiciousColor  GeoJson
 	withAddress      GeoJson
@@ -74,6 +73,3 @@ type Stats struct {
 }
 
 type OutputData map[string][]byte
-
-
-
