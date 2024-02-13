@@ -51,7 +51,6 @@ type GeoContainer struct {
 	Id         string            `json:"id"`
 	Properties map[string]string `json:"properties"`
 	Geometry   Geometry          `json:"geometry"`
-	Status     Status            `json:"status"`
 	Suspicious string            `json:"suspicious"`
 }
 

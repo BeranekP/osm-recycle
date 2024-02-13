@@ -58,13 +58,11 @@ func setValid(data *GeoJson) CheckedData {
 					container.Suspicious = ""
 				}
 			} else {
-				container.Status.InvalidTag = true
 				suspiciousTags.Features = append(suspiciousTags.Features, *container)
 			}
 		}
 		if container.Properties["colour"] != "" {
 			if !validColor(container.Properties["colour"]) {
-				container.Status.InvalidTag = true
 				suspiciousColor.Features = append(suspiciousColor.Features, *container)
 			}
 		}

@@ -57,7 +57,7 @@ func FetchData() {
 	}
 	//fmt.Println(containers)
 	log.Println("Saving data")
-	file, _ := json.MarshalIndent(containers, "", " ")
+	file, _ := json.Marshal(containers)
 	target, _ := filepath.Abs("data/containers.json")
 	err = os.WriteFile(target, file, 0644)
 	if err != nil {

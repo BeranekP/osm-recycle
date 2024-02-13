@@ -39,7 +39,7 @@ func ConvertData() {
 	}
 
 	geojson := Json2GeoJson(r)
-    out, err:=json.MarshalIndent(geojson, "", " ")
+    out, err:=json.MarshalIndent(geojson, "", "")
     if err!=nil{
     log.Fatal(err)
     }

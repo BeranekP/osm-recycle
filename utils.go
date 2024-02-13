@@ -83,17 +83,17 @@ func ValidateData() {
 	}
 
 	checked := setValid(&data)
-	file, _ := json.MarshalIndent(data, "", " ")
+	file, _ := json.Marshal(data)
 	os.WriteFile(source_path, file, 0644)
 
-	missingRecycling, _ := json.MarshalIndent(checked.missingRecycling, "", " ")
-	suspicousTags, _ := json.MarshalIndent(checked.suspiciousTags, "", " ")
-	suspicousColor, _ := json.MarshalIndent(checked.suspiciousColor, "", " ")
-	withAddress, _ := json.MarshalIndent(checked.withAddress, "", " ")
-	fixMe, _ := json.MarshalIndent(checked.fixMe, "", " ")
-	stats, _ := json.MarshalIndent(checked.Stats, "", " ")
-	missingType, _ := json.MarshalIndent(checked.missingType, "", " ")
-	missingAmenity, _ := json.MarshalIndent(checked.missingAmenity, "", " ")
+	missingRecycling, _ := json.MarshalIndent(checked.missingRecycling, "", "")
+	suspicousTags, _ := json.MarshalIndent(checked.suspiciousTags, "", "")
+	suspicousColor, _ := json.MarshalIndent(checked.suspiciousColor, "", "")
+	withAddress, _ := json.MarshalIndent(checked.withAddress, "", "")
+	fixMe, _ := json.MarshalIndent(checked.fixMe, "", "")
+	stats, _ := json.MarshalIndent(checked.Stats, "", "")
+	missingType, _ := json.MarshalIndent(checked.missingType, "", "")
+	missingAmenity, _ := json.MarshalIndent(checked.missingAmenity, "", "")
 
 	output := OutputData{
 		"missingRecycling": missingRecycling,
