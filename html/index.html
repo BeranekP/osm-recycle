@@ -19,7 +19,7 @@
     <div id="map"></div>
 </body>
 <SCript>
-    var map = L.map('map', { renderer: L.canvas() }).setView([50.034, 16.05], 8);
+    var map = L.map('map', {renderer: L.canvas()}).setView([50.034, 16.05], 8);
 
 
 
@@ -33,9 +33,9 @@
     map.getPane('fixme').style.zIndex = 640;
 
 
-    var heat = L.heatLayer([], { pane: 'heat', radius: 15, gradient: { 0.05: '#e5ffe5', 0.55: 'lime', 1: '#043927' }, minOpacity: 0.25 }).addTo(map);
-    var legend = L.control({ position: "bottomleft" });
-    var stats = L.control({ position: "bottomright" });
+    var heat = L.heatLayer([], {pane: 'heat', radius: 15, gradient: {0.05: '#e5ffe5', 0.55: 'lime', 1: '#043927'}, minOpacity: 0.25}).addTo(map);
+    var legend = L.control({position: "bottomleft"});
+    var stats = L.control({position: "bottomright"});
     var layerControl = L.control.layers(null, null).addTo(map)
     var total = 0
     var woRecycling = 0
@@ -89,11 +89,20 @@
 
 
     stats.onAdd = function (map) {
+
         var div = L.DomUtil.create("div", "stats");
-        div.innerHTML += "<h4>Stats</h4>";
-        div.innerHTML += `<p><span id="total">Total: ${total}</span><p>`;
-        div.innerHTML += `<p><span id="woRec">Without recycling: ${woRecycling}</span><p>`;
-        div.innerHTML += `<p><span id="tstamp">${timestamp}</span><p>`;
+        fetch("/geojson/stats.json", {mode: "same-origin"}).then(r => r.json()).then(j => data = j).then((data) => {
+
+            div.innerHTML += "<h4>Stats</h4>";
+            div.innerHTML += `<p>Total:<b> ${data.Total}</b><p>`;
+            div.innerHTML += `<p>Without recycling:<b> ${data.MissingRecycling}</b><p>`;
+            div.innerHTML += `<p>Without amenity:<b> ${data.MissingAmenity}</b><p>`;
+            div.innerHTML += `<p>Without type:<b> ${data.MissingType}</b><p>`;
+            div.innerHTML += `<p>Fixme:<b> ${data.Fixme}</b><p>`;
+            div.innerHTML += `<p>${new Date(data.Timestamp).toLocaleString("en-En")}<p>`;
+
+        })
+
         return div;
     }
 
@@ -116,7 +125,7 @@
 
     function addContainer(path, color, title) {
         var handle
-        fetch(path, { mode: "cors" }).then(r => r.json()).then(j => data = j).then((data) => {
+        fetch(path, {mode: "cors"}).then(r => r.json()).then(j => data = j).then((data) => {
             if (data.features) {
                 handle = L.geoJSON(data, {
                     pane: "other",
@@ -130,17 +139,18 @@
                     },
                     style: function (feature) {
                         if (feature.properties.recycling_type == "centre") {
-                            return { color: color }
+                            return {color: color}
                         }
 
-                        return { fillColor: color };
+                        return {fillColor: color};
 
                     }
 
                 })
                 //overlayMaps[title] = handle
-                if (data.features){
-                    layerControl.addOverlay(handle, title);}
+                if (data.features) {
+                    layerControl.addOverlay(handle, title);
+                }
                 handle.addTo(map);
                 handles.push(handle)
             }
@@ -153,14 +163,14 @@
 
     function addCustom(path, title, icon) {
         var handle
-        fetch(path, { mode: "cors" }).then(r => r.json()).then(j => data = j).then((data) => {
+        fetch(path, {mode: "cors"}).then(r => r.json()).then(j => data = j).then((data) => {
             if (data.features) {
                 handle = L.geoJSON(data, {
                     pane: "fixme",
                     onEachFeature: onEachFeature,
 
                     pointToLayer: function (feature, latlng) {
-                        return L.marker(latlng, { icon: icon, pane: "fixme" });
+                        return L.marker(latlng, {icon: icon, pane: "fixme"});
 
 
                     },
@@ -178,7 +188,7 @@
 
     function addHeat(path, title) {
 
-        fetch(path, { mode: "same-origin" }).then(r => r.json()).then(j => data = j).then((data) => {
+        fetch(path, {mode: "same-origin"}).then(r => r.json()).then(j => data = j).then((data) => {
             for (c of data.features) {
                 [lat, long] = [c.geometry.coordinates[0], c.geometry.coordinates[1]]
                 heat.addLatLng([long, lat])
@@ -208,7 +218,7 @@
     function onEachFeature(feature, layer) {
         // does this feature have a property named popupContent?
         if (feature.id && feature.status && feature.properties) {
-            popUp = `<b>${feature.properties["recycling_type"].toUpperCase() || "unknown".toUpperCase()}</b>: <a href=http://openstreetmap.org/${feature.id} target="_blank" rel="noopener noreferrer">${feature.id}</a><ul>`
+            popUp = `<b>${(feature.properties["recycling_type"] || "unknown").toUpperCase()}</b>: <a href=http://openstreetmap.org/${feature.id} target="_blank" rel="noopener noreferrer">${feature.id}</a><ul>`
             if (feature.properties["fixme"]) {
                 popUp += `<p> <b>! ${feature.properties["fixme"]} !</b></p>`
             }
@@ -226,24 +236,7 @@
 
 
 
-    function getStats() {
-        fetch("/geojson/stats.json", { mode: "same-origin" }).then(r => r.json()).then(j => data = j).then((data) => {
-            timeUnix = data.Timestamp
-            total = data.Total
-            woRecycling = data.MissingRecycling
-            totalSpan = document.getElementById("total")
-            totalSpan.innerHTML = `Total: <b>${total}<b>`
 
-            woRec = document.getElementById("woRec")
-            woRec.innerHTML = `Without recycling: <b>${woRecycling}</b>`
-
-            timestamp = new Date(timeUnix).toLocaleString("en-En")
-            tstamp = document.getElementById("tstamp")
-            tstamp.innerHTML = `${timestamp}`
-        })
-
-    }
-    getStats()
 
 
 </SCript>

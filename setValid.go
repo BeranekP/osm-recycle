@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"slices"
 	"strings"
@@ -25,17 +24,10 @@ func setValid(data *GeoJson) CheckedData {
 	for i := range data.Features {
 		container := &data.Features[i]
 		stats.Total += 1
-		if container.Properties["recycling_type"] == "" {
-			fmt.Println("MissingRecyclingType")
-			container.Status.InvalidType = true
-			missingType.Features = append(missingType.Features, *container)
 
-		}
-		if container.Properties["amenity"] == "" {
-			container.Status.NoAmenity = true
-		}
-		if (container.Properties["recycling_type"] != "container") && (container.Properties["recycling_type"] != "centre") || (container.Properties["recycling_type"] != "bin") {
-			container.Status.InvalidType = true
+		if (container.Properties["recycling_type"] != "container") && (container.Properties["recycling_type"] != "centre") && (container.Properties["recycling_type"] != "bin") {
+			missingType.Features = append(missingType.Features, *container)
+            stats.MissingType += 1
 
 		}
 		checkSubstance := 0
@@ -47,14 +39,14 @@ func setValid(data *GeoJson) CheckedData {
 
 		if checkSubstance == 0 {
 
-			container.Status.NoRecycling = true
 			missingRecycling.Features = append(missingRecycling.Features, *container)
 			stats.MissingRecycling += 1
 
 		}
-        if container.Properties["amenity"] != "recycling"{
-            missingAmenity.Features = append(missingAmenity.Features, *container)
-        }
+		if container.Properties["amenity"] != "recycling" {
+			missingAmenity.Features = append(missingAmenity.Features, *container)
+            stats.MissingAmenity += 1
+		}
 
 		if !validKeys(container.Properties, container) {
 			if container.Properties["recycling_type"] == "centre" && (container.Properties["barrier"] == "fence" || container.Properties["barrier"] == "wall") {
@@ -82,6 +74,7 @@ func setValid(data *GeoJson) CheckedData {
 
 		if container.Properties["fixme"] != "" {
 			fixMe.Features = append(fixMe.Features, *container)
+            stats.Fixme += 1
 
 		}
 

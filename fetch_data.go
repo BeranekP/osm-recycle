@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func FetchData()  {
+func FetchData() {
 	client := http.Client{}
 	timeout := 60
 	geocodes := getGeocodes()
@@ -20,6 +20,11 @@ func FetchData()  {
 	query := fmt.Sprintf(`[out:json][timeout:%d];
                 area(id:%d)->.searchArea;
                 nwr["amenity" = "recycling"](area.searchArea);
+                out center;`, timeout, id)
+	query = fmt.Sprintf(`[out:json][timeout:%d];
+                area(id:%d)->.searchArea;
+                (nwr[~"^recycling:.*$"~"."](area.searchArea);
+                nwr["amenity"="recycling"](area.searchArea);); 
                 out center;`, timeout, id)
 
 	form := url.Values{}
@@ -51,13 +56,12 @@ func FetchData()  {
 		log.Fatal("Error parsing data:", err)
 	}
 	//fmt.Println(containers)
-    log.Println("Saving data")
+	log.Println("Saving data")
 	file, _ := json.MarshalIndent(containers, "", " ")
-    target, _ := filepath.Abs("data/containers.json")
+	target, _ := filepath.Abs("data/containers.json")
 	err = os.WriteFile(target, file, 0644)
-    if err != nil {
-        log.Fatal("Error writing file: ", err)
-    }
-
+	if err != nil {
+		log.Fatal("Error writing file: ", err)
+	}
 
 }

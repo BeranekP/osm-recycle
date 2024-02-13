@@ -69,6 +69,9 @@ type CheckedData struct {
 type Stats struct {
 	Total            int
 	MissingRecycling int
+	MissingType      int
+	MissingAmenity   int
+	Fixme            int
 	Timestamp        int64
 }
 
