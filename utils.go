@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -69,31 +72,30 @@ func ServeData() {
 func ValidateData() {
 
 	var data GeoJson
-	source_path, _ := filepath.Abs("data/containers.geojson")
-	raw_data, err := os.ReadFile(source_path)
+	raw_data := DecompressData("data/containers.geojson.gz")
 
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	err = json.Unmarshal(raw_data, &data)
+    err := json.Unmarshal(raw_data, &data)
 
 	if err != nil {
 		log.Fatal("Error parsing GeoJSON:", err)
 	}
 
 	checked := setValid(&data)
-	file, _ := json.Marshal(data)
-	os.WriteFile(source_path, file, 0644)
+//	file, _ := json.Marshal(data)
 
-	missingRecycling, _ := json.MarshalIndent(checked.missingRecycling, "", "")
-	suspicousTags, _ := json.MarshalIndent(checked.suspiciousTags, "", "")
-	suspicousColor, _ := json.MarshalIndent(checked.suspiciousColor, "", "")
-	withAddress, _ := json.MarshalIndent(checked.withAddress, "", "")
-	fixMe, _ := json.MarshalIndent(checked.fixMe, "", "")
-	stats, _ := json.MarshalIndent(checked.Stats, "", "")
-	missingType, _ := json.MarshalIndent(checked.missingType, "", "")
-	missingAmenity, _ := json.MarshalIndent(checked.missingAmenity, "", "")
+  //  CompressData(file,"data/containers.geojson.gz" )
+
+
+
+	missingRecycling, _ := json.Marshal(checked.missingRecycling)
+	suspicousTags, _ := json.Marshal(checked.suspiciousTags)
+	suspicousColor, _ := json.Marshal(checked.suspiciousColor)
+	withAddress, _ := json.Marshal(checked.withAddress)
+	fixMe, _ := json.Marshal(checked.fixMe)
+	stats, _ := json.Marshal(checked.Stats)
+	missingType, _ := json.Marshal(checked.missingType)
+	missingAmenity, _ := json.Marshal(checked.missingAmenity)
 
 	output := OutputData{
 		"missingRecycling": missingRecycling,
@@ -106,12 +108,13 @@ func ValidateData() {
 		"stats":            stats,
 	}
 	for k, v := range output {
-		partial := fmt.Sprintf("data/%s.geojson", k)
+		partial := fmt.Sprintf("data/%s.geojson.gz", k)
 		if k == "stats" {
-			partial = fmt.Sprintf("data/%s.json", k)
+			partial = fmt.Sprintf("data/%s.json.gz", k)
 		}
-		filePath, _ := filepath.Abs(partial)
-		os.WriteFile(filePath, v, 0644)
+        CompressData(v, partial)
+		//filePath, _ := filepath.Abs(partial)
+		//os.WriteFile(filePath, v, 0644)
 
 	}
 }
@@ -119,7 +122,7 @@ func FilesExist() bool {
 	var validated []string = []string{"containers", "missingType", "missingRecycling", "missingAmenity", "withAddress", "fixMe", "suspiciousTags", "suspiciousColor"}
 
 	for _, file := range validated {
-		path := fmt.Sprintf("data/%s.geojson", file)
+		path := fmt.Sprintf("data/%s.geojson.gz", file)
 		path, _ = filepath.Abs(path)
 		if _, err := os.Stat(path); err != nil {
 			log.Printf("File %s not found", path)
@@ -159,4 +162,49 @@ func Json2GeoJson(r ResponseData) GeoJson {
 	output.Features = features
 	return output
 
+}
+
+
+func CompressData(jsonBytes []byte, outPath string){
+
+	gzPath, _ := filepath.Abs(outPath)
+    //_, err := os.OpenFile(gzPath, os.O_CREATE, 0666)
+	//if err != nil {
+//		log.Fatal(err)
+//	}
+
+    var fileGZ bytes.Buffer
+	zipper := gzip.NewWriter(&fileGZ)
+
+    _, err := zipper.Write(jsonBytes)
+	if err != nil {
+        log.Fatal("GZIP error: ", err)
+	}
+    zipper.Close()
+    os.WriteFile(gzPath, fileGZ.Bytes(), 0644)
+
+}
+
+func DecompressData(path string) []byte{
+    abs_path , _ := filepath.Abs(path)
+    log.Println("Decompressing file: ", abs_path)
+    zippped, err := os.ReadFile(abs_path)
+	if err != nil {
+        log.Fatal("ReadFile: ", err)
+	}
+
+    unzipped, err := gzip.NewReader(bytes.NewReader(zippped))
+
+    if err != nil {
+        log.Fatal("Error decompressing: ", err)
+	}
+    //var output []byte
+    output, err := io.ReadAll(unzipped)
+    //_, err = unzipped.Read(output)
+    if err != nil{
+        log.Fatal("Error reading unzipped: ", err)
+    }
+
+    unzipped.Close()
+    return output   
 }

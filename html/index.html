@@ -72,8 +72,12 @@
 
 
     legend.onAdd = function (map) {
-        var div = L.DomUtil.create("div", "legend");
-        div.innerHTML += "<h4>Legend</h4>";
+        var container = L.DomUtil.create("div", "legendContainer")
+        var legendButton = L.DomUtil.create("div", "legendButton legend")
+        legendButton.innerHTML += "<h4>Legend</h4>";
+        var div = L.DomUtil.create("div", "legend hidden");
+        container.appendChild(legendButton);
+        container.appendChild(div);
         div.innerHTML += '<i style="background: #ee4035" id = "container"></i><span>Container</span><br>';
         div.innerHTML += '<i style="outline-color: #ee4035" id = "centre"></i><span>Centre</span><br>';
         div.innerHTML += '<i style="background: #ee4035"></i><span>Missing recycling</span><br>';
@@ -84,16 +88,38 @@
         div.innerHTML += '<i style="background: #0392cf"></i><span>Suspicious tags present</span><br>';
         div.innerHTML += '<i id="fixme"></i><span>Fixme</span><br>';
         div.innerHTML += '<i style="background: lime"></i><span>Container coverage</span><br>';
-        return div;
+
+
+        legendButton.addEventListener("click", (e) => {
+            e.preventDefault()
+            div.classList.toggle("hidden")
+        })
+
+
+        return container;
     };
 
 
     stats.onAdd = function (map) {
 
         var div = L.DomUtil.create("div", "stats");
-        fetch("/geojson/stats.json", {mode: "same-origin"}).then(r => r.json()).then(j => data = j).then((data) => {
+        var container = L.DomUtil.create("div", "statsContainer")
+        var statsButton = L.DomUtil.create("div", "legendButton legend")
+        statsButton.innerHTML += "<h4>Stats</h4>";
+        var div = L.DomUtil.create("div", "stats hidden");
+        container.appendChild(statsButton);
+        container.appendChild(div);
 
-            div.innerHTML += "<h4>Stats</h4>";
+
+        fetch("/geojson/stats.json.gz", {mode: "same-origin"}).then(r => {
+            ds = new DecompressionStream('gzip');
+            s = r.body
+            stream_in = s.pipeThrough(ds);
+            return new Response(stream_in).blob()
+
+
+        }).then(blob => blob.text()).then(text => JSON.parse(text)).then((data) => {
+
             div.innerHTML += `<p>Total:<b> ${data.Total}</b><p>`;
             if (data.MissingRecycling) {
                 div.innerHTML += `<p>Without recycling:<b> ${data.MissingRecycling}</b><p>`;
@@ -113,8 +139,12 @@
 
 
         })
+        statsButton.addEventListener("click", (e) => {
+            e.preventDefault()
+            div.classList.toggle("hidden")
+        })
 
-        return div;
+        return container;
     }
 
 
@@ -136,7 +166,12 @@
 
     function addContainer(path, color, title) {
         var handle
-        fetch(path, {mode: "cors"}).then(r => r.json()).then(j => data = j).then((data) => {
+        fetch(path, {mode: "cors"}).then(r => {
+            ds = new DecompressionStream('gzip');
+            s = r.body
+            stream_in = s.pipeThrough(ds);
+            return new Response(stream_in).blob()
+        }).then(blob => blob.text()).then(text => JSON.parse(text)).then((data) => {
             if (data.features) {
                 handle = L.geoJSON(data, {
                     pane: "other",
@@ -174,7 +209,13 @@
 
     function addCustom(path, title, icon) {
         var handle
-        fetch(path, {mode: "cors"}).then(r => r.json()).then(j => data = j).then((data) => {
+        fetch(path, {mode: "cors"}).then(r => {
+            ds = new DecompressionStream('gzip');
+            s = r.body
+            stream_in = s.pipeThrough(ds);
+            return new Response(stream_in).blob()
+
+        }).then(blob => blob.text()).then(text => JSON.parse(text)).then((data) => {
             if (data.features) {
                 handle = L.geoJSON(data, {
                     pane: "fixme",
@@ -199,7 +240,14 @@
 
     function addHeat(path, title) {
 
-        fetch(path, {mode: "same-origin"}).then(r => r.json()).then(j => data = j).then((data) => {
+        fetch(path, {mode: "same-origin"}).then(r => {
+            ds = new DecompressionStream('gzip');
+            s = r.body
+            stream_in = s.pipeThrough(ds);
+            return new Response(stream_in).blob()
+
+            // r.json()
+        }).then(blob => blob.text()).then(text => JSON.parse(text)).then((data) => {
             for (c of data.features) {
                 [lat, long] = [c.geometry.coordinates[0], c.geometry.coordinates[1]]
                 heat.addLatLng([long, lat])
@@ -211,14 +259,14 @@
 
 
 
-    addHeat("/geojson/containers.geojson", title = "Container coverage")
-    addContainer("/geojson/missingRecycling.geojson", "#ee4035", title = "Missing recycling")
-    addContainer("geojson/suspiciousColor.geojson", "#fdf498", title = "Suspicious color")
-    addContainer("geojson/withAddress.geojson", "#343d46", title = "With address")
-    addContainer("/geojson/suspiciousTags.geojson", "#0392cf", title = "Suspicious tags")
-    addContainer("/geojson/missingAmenity.geojson", "#542609", title = "Missing/Wrong amenity")
-    addCustom("/geojson/fixMe.geojson", "Fixme", fixMeIcon)
-    addCustom("/geojson/missingType.geojson", "Missing type", missingIcon)
+    addHeat("/geojson/containers.geojson.gz", title = "Container coverage")
+    addContainer("/geojson/missingRecycling.geojson.gz", "#ee4035", title = "Missing recycling")
+    addContainer("geojson/suspiciousColor.geojson.gz", "#fdf498", title = "Suspicious color")
+    addContainer("geojson/withAddress.geojson.gz", "#343d46", title = "With address")
+    addContainer("/geojson/suspiciousTags.geojson.gz", "#0392cf", title = "Suspicious tags")
+    addContainer("/geojson/missingAmenity.geojson.gz", "#542609", title = "Missing/Wrong amenity")
+    addCustom("/geojson/fixMe.geojson.gz", "Fixme", fixMeIcon)
+    addCustom("/geojson/missingType.geojson.gz", "Missing type", missingIcon)
 
     var baseMaps = {
         "OpenStreetMap": osm,
@@ -228,7 +276,7 @@
 
     function onEachFeature(feature, layer) {
         // does this feature have a property named popupContent?
-        if (feature.id && feature.status && feature.properties) {
+        if (feature.id && feature.properties) {
             popUp = `<b>${(feature.properties["recycling_type"] || "unknown").toUpperCase()}</b>: <a href=http://openstreetmap.org/${feature.id} target="_blank" rel="noopener noreferrer">${feature.id}</a><ul>`
             if (feature.properties["fixme"]) {
                 popUp += `<p> <b>! ${feature.properties["fixme"]} !</b></p>`

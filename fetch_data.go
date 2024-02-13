@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -58,10 +56,11 @@ func FetchData() {
 	//fmt.Println(containers)
 	log.Println("Saving data")
 	file, _ := json.Marshal(containers)
-	target, _ := filepath.Abs("data/containers.json")
-	err = os.WriteFile(target, file, 0644)
-	if err != nil {
-		log.Fatal("Error writing file: ", err)
-	}
+	//target, _ := filepath.Abs("data/containers.json")
+    CompressData(file, "data/containers.json.gz")
+	//err = os.WriteFile(target, file, 0644)
+	//if err != nil {
+	//	log.Fatal("Error writing file: ", err)
+	//}
 
 }

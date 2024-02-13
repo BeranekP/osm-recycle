@@ -3,4 +3,4 @@ recyko2
 .env
 *.json
 *.geojson
-
+*.gz
