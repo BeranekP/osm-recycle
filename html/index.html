@@ -95,11 +95,22 @@
 
             div.innerHTML += "<h4>Stats</h4>";
             div.innerHTML += `<p>Total:<b> ${data.Total}</b><p>`;
-            div.innerHTML += `<p>Without recycling:<b> ${data.MissingRecycling}</b><p>`;
-            div.innerHTML += `<p>Without amenity:<b> ${data.MissingAmenity}</b><p>`;
-            div.innerHTML += `<p>Without type:<b> ${data.MissingType}</b><p>`;
-            div.innerHTML += `<p>Fixme:<b> ${data.Fixme}</b><p>`;
+            if (data.MissingRecycling) {
+                div.innerHTML += `<p>Without recycling:<b> ${data.MissingRecycling}</b><p>`;
+            }
+            if (data.MissingAmenity) {
+                div.innerHTML += `<p>Without amenity:<b> ${data.MissingAmenity}</b><p>`;
+            }
+            if (data.MissingType) {
+                div.innerHTML += `<p>Without type:<b> ${data.MissingType}</b><p>`;
+            }
+            if (data.Fixme) {
+                div.innerHTML += `<p>Fixme:<b> ${data.Fixme}</b><p>`;
+            }
+            div.innerHTML += `<p>Well defined:<b> ${data.Total - data.MissingRecycling - data.MissingType}</b><p>`;
+
             div.innerHTML += `<p>${new Date(data.Timestamp).toLocaleString("en-En")}<p>`;
+
 
         })
 
