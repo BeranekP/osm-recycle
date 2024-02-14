@@ -1,4 +1,4 @@
-module github.com/BeranekP/recyko2
+module github.com/BeranekP/osm-recycle
 
 go 1.22
 
