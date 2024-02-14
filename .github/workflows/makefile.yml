@@ -1,8 +1,8 @@
 name: Makefile CI
 
 on:
-  push:
-    branches: [ "master" ]
+  release:
+    types: [created]
 
 permissions:
     contents: write
