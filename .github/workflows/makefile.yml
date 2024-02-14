@@ -9,38 +9,24 @@ on:
 
 
 jobs:
-  build:
-
+ release-linux-amd64:
+    name: release linux/amd64
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-go@v4
+    - uses: actions/checkout@v4
+    - uses: wangyoucao577/go-release-action@v1
       with:
-          # Semantic version range syntax or exact version of Go
-          go-version: '1.22.x'
-          cache-dependency-path: go.sum
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: linux
+        goarch: amd64
 
-    - name: Install dependencies
-      run: go get .
-      
-    - name: build
-      run: make build
-
-    - name: Generate release tag
-      id: generate_release_tag
-      uses: alexvingg/next-release-tag@v1.0.4
+ release-windows-amd64:
+    name: release windows/amd64
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: wangyoucao577/go-release-action@v1
       with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag_prefix: ''
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-      with:
-          tag_name: ${{ steps.generate_release_tag.outputs.release_tag }}
-          release_name: Release ${{ steps.generate_release_tag.outputs.release_tag }}
-          draft: false
-          prerelease: true
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: windows
+        goarch: amd64
