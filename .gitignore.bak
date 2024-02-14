@@ -1,6 +1,6 @@
 data/
 *.exe
-osm-recycle
+recyko2
 .env
 *.json
 *.geojson
