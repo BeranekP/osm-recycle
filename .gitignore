@@ -5,3 +5,6 @@ osm-recycle
 *.json
 *.geojson
 *.gz
+*.bak
+
+dist/
