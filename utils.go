@@ -119,12 +119,20 @@ func ValidateData() {
 	}
 }
 func FilesExist() bool {
+    data, _ := filepath.Abs("data")
+    if _, err := os.Stat(data); err != nil{
+        if err = os.Mkdir("data", 0644); err != nil{
+            log.Fatal("Data directory not found, error creating: ", err)
+        }
+    }
+
+
 	var validated []string = []string{"containers", "missingType", "missingRecycling", "missingAmenity", "withAddress", "fixMe", "suspiciousTags", "suspiciousColor"}
 
 	for _, file := range validated {
 		path := fmt.Sprintf("data/%s.geojson.gz", file)
 		path, _ = filepath.Abs(path)
-		if _, err := os.Stat(path); err != nil {
+        if _, err := os.Stat(path); err != nil {
 			log.Printf("File %s not found", path)
 			return false
 		}
