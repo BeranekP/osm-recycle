@@ -10,24 +10,23 @@ permissions:
 
 
 jobs:
- release-linux-amd64:
-    name: release linux/amd64
+ goreleaser:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: wangyoucao577/go-release-action@v1
-      with:
-        github_token: ${{ secrets.TOKEN }}
-        goos: linux
-        goarch: amd64
-
- release-windows-amd64:
-    name: release windows/amd64
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: wangyoucao577/go-release-action@v1
-      with:
-        github_token: ${{ secrets.TOKEN }}
-        goos: windows
-        goarch: amd64
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      -
+        name: Set up Go
+        uses: actions/setup-go@v4
+      -
+        name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
