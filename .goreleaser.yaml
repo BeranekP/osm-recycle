@@ -26,6 +26,8 @@ builds:
 
 archives:
   - format: tar.gz
+    files:
+        - html/*
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
@@ -38,8 +40,6 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-    files:
-        - html/*
 
 changelog:
   sort: asc

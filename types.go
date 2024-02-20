@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type Status struct {
 	NoAmenity   bool `json:"noAmenity"`
 	NoType      bool `json:"noType"`
@@ -9,13 +11,17 @@ type Status struct {
 }
 
 type Container struct {
-	Type   string            `json:"type"`
-	Id     int               `json:"id"`
-	Nodes  []int             `json:"nodes,omitempty"`
-	Lat    float32           `json:"lat,omitempty"`
-	Lon    float32           `json:"lon,omitempty"`
-	Tags   map[string]string `json:"tags"`
-	Center Center            `json:"center,omitempty"`
+	Type      string            `json:"type"`
+	Id        int               `json:"id"`
+	Nodes     []int             `json:"nodes,omitempty"`
+	Lat       float32           `json:"lat,omitempty"`
+	Lon       float32           `json:"lon,omitempty"`
+	Tags      map[string]string `json:"tags"`
+	Center    Center            `json:"center,omitempty"`
+	User      string            `json:"user,omitempty"`
+	Uid       int               `json:"uid,omitempty"`
+	Timestamp time.Time         `json:"timestamp,omitempty"`
+	Version   int               `json:"version,omitempty"`
 }
 
 type Center struct {
@@ -52,6 +58,11 @@ type GeoContainer struct {
 	Properties map[string]string `json:"properties"`
 	Geometry   Geometry          `json:"geometry"`
 	Suspicious string            `json:"suspicious"`
+	User       string            `json:"user,omitempty"`
+	Uid        int               `json:"uid,omitempty"`
+	Timestamp  time.Time         `json:"timestamp,omitempty"`
+	Recent     bool              `json:"recent,omitempty"`
+	Version    int               `json:"version,omitempty"`
 }
 
 type CheckedData struct {
@@ -63,6 +74,7 @@ type CheckedData struct {
 	withAddress      GeoJson
 	fixMe            GeoJson
 	Stats            Stats
+	Users            []User
 }
 
 type Stats struct {
@@ -72,6 +84,15 @@ type Stats struct {
 	MissingAmenity   int
 	Fixme            int
 	Timestamp        int64
+}
+
+type User struct {
+	Id              int    `json:"id"`
+	Name            string `json:"name"`
+	ValidNew        int    `json:"validNew"`
+	ValidModified   int    `json:"validModified"`
+	InvalidNew      int    `json:"invalidNew"`
+	InvalidModified int    `json:"invalidModified"`
 }
 
 type OutputData map[string][]byte

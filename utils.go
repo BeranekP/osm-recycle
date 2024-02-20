@@ -58,7 +58,12 @@ func ServeData() {
 	}
 	port := os.Getenv("PORT")
 
-	log.Println("Serving data")
+    if port == "" {
+        port = "3333"
+    }
+    
+
+    log.Printf("Serving data on http://localhost:%s/", port)
 	gjson := http.FileServer(http.Dir("./data"))
 	html := http.FileServer(http.Dir("./html"))
 	http.Handle("/geojson/", http.StripPrefix("/geojson", gjson))
@@ -94,6 +99,7 @@ func ValidateData() {
 	withAddress, _ := json.Marshal(checked.withAddress)
 	fixMe, _ := json.Marshal(checked.fixMe)
 	stats, _ := json.Marshal(checked.Stats)
+	users, _ := json.Marshal(checked.Users)
 	missingType, _ := json.Marshal(checked.missingType)
 	missingAmenity, _ := json.Marshal(checked.missingAmenity)
 
@@ -106,10 +112,11 @@ func ValidateData() {
 		"withAddress":      withAddress,
 		"fixMe":            fixMe,
 		"stats":            stats,
+        "users":            users,
 	}
 	for k, v := range output {
 		partial := fmt.Sprintf("data/%s.geojson.gz", k)
-		if k == "stats" {
+		if k == "stats" || k == "users"{
 			partial = fmt.Sprintf("data/%s.json.gz", k)
 		}
         CompressData(v, partial)
@@ -158,6 +165,10 @@ func Json2GeoJson(r ResponseData) GeoJson {
 		geoContainer.Id = fmt.Sprintf("%s/%d", container.Type, container.Id)
 		geoContainer.Geometry.Type = "Point"
 		geoContainer.Properties = container.Tags
+        geoContainer.User = container.User
+        geoContainer.Uid = container.Uid
+        geoContainer.Timestamp = container.Timestamp
+        geoContainer.Version = container.Version
 
 		if container.Type == "node" {
 			geoContainer.Geometry.Coordinates = []float32{container.Lon, container.Lat}

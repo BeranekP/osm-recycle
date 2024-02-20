@@ -36,6 +36,7 @@
     var heat = L.heatLayer([], {pane: 'heat', radius: 15, gradient: {0.05: '#e5ffe5', 0.55: 'lime', 1: '#043927'}, minOpacity: 0.25}).addTo(map);
     var legend = L.control({position: "bottomleft"});
     var stats = L.control({position: "bottomright"});
+    var leaders = L.control({position: "topright"});
     var layerControl = L.control.layers(null, null).addTo(map)
     var total = 0
     var woRecycling = 0
@@ -146,11 +147,53 @@
 
         return container;
     }
+    leaders.onAdd = function (map) {
+
+        var div = L.DomUtil.create("div", "leaders");
+        var container = L.DomUtil.create("div", "leadersContainer")
+        var leadersButton = L.DomUtil.create("div", "legendButton legend")
+        leadersButton.innerHTML += "<h4>Leaders</h4>";
+        var div = L.DomUtil.create("div", "leaders hidden");
+        container.appendChild(leadersButton);
+        container.appendChild(div);
+
+
+        fetch("/geojson/users.json.gz", {mode: "same-origin"}).then(r => {
+            ds = new DecompressionStream('gzip');
+            s = r.body
+            stream_in = s.pipeThrough(ds);
+            return new Response(stream_in).blob()
+
+
+        }).then(blob => blob.text()).then(text => JSON.parse(text)).then((data) => {
+            users = [...data].sort((v, v2) => {
+                return (v2.validNew + v2.validModified) - (v.validNew + v.validModified)
+            })
+
+            list = L.DomUtil.create('table')
+            div.appendChild(list)
+            list.innerHTML += "<tr><th>Name</th><th>Well defined new</th><th>Well defined modified</th></tr>"
+
+            for (user of users.slice(0, 10)) {
+                list.innerHTML += `<tr><td>${user.name}</td><td>${user.validNew}</td><td> ${user.validModified}</td></tr>`
+            }
+
+
+        })
+        leadersButton.addEventListener("click", (e) => {
+            e.preventDefault()
+            div.classList.toggle("hidden")
+        })
+
+        return container;
+    }
+
 
 
 
     legend.addTo(map);
     stats.addTo(map);
+    leaders.addTo(map);
 
     osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         pane: "base",
@@ -185,9 +228,15 @@
                     },
                     style: function (feature) {
                         if (feature.properties.recycling_type == "centre") {
+                            if (feature.recent) {
+                                return {color: color, radius: 12}
+                            }
                             return {color: color}
                         }
 
+                        if (feature.recent) {
+                            return {fillColor: color, radius: 12}
+                        }
                         return {fillColor: color};
 
                     }
@@ -286,6 +335,12 @@
             }
             if (feature.suspicious) {
                 popUp += `<li> suspicious:<b> ${feature.suspicious} </b></li>`
+            }
+            if (feature.user) {
+                popUp += `<li> user:<b> <a href="http://openstreetmap.org/user/${feature.user}">${feature.user}</b></a><i>`
+            }
+            if (feature.recent) {
+                popUp += `<li><b> recent addition (< 1 week) </b></li>`
             }
             popUp += "</ul>"
 

@@ -17,6 +17,7 @@ func setValid(data *GeoJson) CheckedData {
 	fixMe := GeoJson{Type: "FeatureCollection"}
 	missingType := GeoJson{Type: "FeatureCollection"}
 	missingAmenity := GeoJson{Type: "FeatureCollection"}
+    users := make(map[int]*User)
 
 	var stats Stats
 	stats.Timestamp = time.Now().UnixMilli()
@@ -24,10 +25,23 @@ func setValid(data *GeoJson) CheckedData {
 	for i := range data.Features {
 		container := &data.Features[i]
 		stats.Total += 1
+		_, ok := users[container.Uid]
+		valid := true
+		if !ok {
+			users[container.Uid] = &User{Name: container.User, Id: container.Uid}
+		}
+
+        user, _ := users[container.Uid] 
+
+		// check if newer than 1 week
+		if container.Timestamp.After(time.Now().Add(time.Duration(-168) * time.Hour)) {
+			container.Recent = true
+		}
 
 		if (container.Properties["recycling_type"] != "container") && (container.Properties["recycling_type"] != "centre") && (container.Properties["recycling_type"] != "bin") {
 			missingType.Features = append(missingType.Features, *container)
-            stats.MissingType += 1
+			stats.MissingType += 1
+			valid = false
 
 		}
 		checkSubstance := 0
@@ -41,11 +55,13 @@ func setValid(data *GeoJson) CheckedData {
 
 			missingRecycling.Features = append(missingRecycling.Features, *container)
 			stats.MissingRecycling += 1
+			valid = false
 
 		}
 		if container.Properties["amenity"] != "recycling" {
 			missingAmenity.Features = append(missingAmenity.Features, *container)
-            stats.MissingAmenity += 1
+			stats.MissingAmenity += 1
+			valid = false
 		}
 
 		if !validKeys(container.Properties, container) {
@@ -72,12 +88,32 @@ func setValid(data *GeoJson) CheckedData {
 
 		if container.Properties["fixme"] != "" {
 			fixMe.Features = append(fixMe.Features, *container)
-            stats.Fixme += 1
+			stats.Fixme += 1
 
 		}
 
+		if valid {
+			if container.Version == 1 {
+				user.ValidNew += 1
+			} else {
+				user.ValidModified += 1
+			}
+
+		} else {
+			if container.Version == 1 {
+				user.InvalidNew += 1
+			} else {
+				user.InvalidModified += 1
+			}
+
+		}
 	}
-	return CheckedData{missingRecycling, missingType, missingAmenity, suspiciousTags, suspiciousColor, withAddress, fixMe, stats}
+    var user_arr []User
+    for _, v := range(users){
+        user_arr = append(user_arr, *v)
+
+    }
+	return CheckedData{missingRecycling, missingType, missingAmenity, suspiciousTags, suspiciousColor, withAddress, fixMe, stats, user_arr}
 }
 
 func validKeys(props map[string]string, c *GeoContainer) bool {

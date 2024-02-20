@@ -22,8 +22,9 @@ func FetchData() {
 	query = fmt.Sprintf(`[out:json][timeout:%d];
                 area(id:%d)->.searchArea;
                 (nwr[~"^recycling:.*$"~"."](area.searchArea);
-                nwr["amenity"="recycling"](area.searchArea);); 
-                out center;`, timeout, id)
+                nwr["amenity"="recycling"](area.searchArea);
+                nwr["recycling_type"~".*"](area.searchArea);); 
+                out center meta;`, timeout, id)
 
 	form := url.Values{}
 	form.Add("data", query)
