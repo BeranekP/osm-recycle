@@ -31,7 +31,7 @@ func ConvertData() {
 	}
 	CompressData(out, "data/containers.geojson.gz")
 
-	osm, _ := filepath.Abs("data/container.json")
+	osm, _ := filepath.Abs("data/containers.json.gz")
 	os.Remove(osm)
 
 }
