@@ -2,7 +2,7 @@ data/
 *.exe
 osm-recycle
 .env
-*.json
+.json
 *.geojson
 *.gz
 *.bak
