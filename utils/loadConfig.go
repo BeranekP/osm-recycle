@@ -11,7 +11,7 @@ import (
 func LoadConfig(path string) types.Config {
 	var config types.Config
 
-	log.Println("Loading initial config")
+	log.Println("Loading config")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatal("Error loading config file: ", err)
@@ -22,6 +22,6 @@ func LoadConfig(path string) types.Config {
 		log.Fatal("Error parsing config file", err)
 	}
 
-	log.Println("Config loaded")
+	log.Println("Config successfully loaded")
 	return config
 }

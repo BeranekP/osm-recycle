@@ -44,6 +44,6 @@ func update() {
 	utils.ConvertData(config)
 	utils.ValidateData(config)
 
-	log.Println("Date updated.")
+	log.Println("Data updated")
 
 }
