@@ -106,3 +106,10 @@ body {
     background: rgba(255, 255, 255, 0.8);
     text-align: center;
 }
+
+.warning{
+    padding: 0.5rem;
+    outline: 1px solid #e76f51;
+    border-radius: 5px;
+    background-color: #fec89a;
+}

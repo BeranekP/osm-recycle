@@ -144,7 +144,7 @@ func FilesExist() bool {
 			return false
 		}
 	}
-	path, _ := filepath.Abs("data/stats.json")
+	path, _ := filepath.Abs("data/stats.json.gz")
 	if _, err := os.Stat(path); err != nil {
 		log.Printf("File %s not found", path)
 		return false

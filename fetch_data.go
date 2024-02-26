@@ -15,11 +15,7 @@ func FetchData() {
 	timeout := 60
 	geocodes := getGeocodes()
 	id := geocodes.CZ
-	query := fmt.Sprintf(`[out:json][timeout:%d];
-                area(id:%d)->.searchArea;
-                nwr["amenity" = "recycling"](area.searchArea);
-                out center;`, timeout, id)
-	query = fmt.Sprintf(`[out:json][timeout:%d];
+    query := fmt.Sprintf(`[out:json][timeout:%d];
                 area(id:%d)->.searchArea;
                 (nwr[~"^recycling:.*$"~"."](area.searchArea);
                 nwr["amenity"="recycling"](area.searchArea);

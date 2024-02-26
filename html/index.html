@@ -172,7 +172,7 @@
 
             list = L.DomUtil.create('table')
             div.appendChild(list)
-            list.innerHTML += "<tr><th>Name</th><th>Well defined new</th><th>Well defined modified</th></tr>"
+            list.innerHTML += "<tr><th>Name</th><th>OK new</th><th>OK modified</th></tr>"
 
             for (user of users.slice(0, 10)) {
                 list.innerHTML += `<tr><td>${user.name}</td><td>${user.validNew}</td><td> ${user.validModified}</td></tr>`
@@ -328,7 +328,7 @@
         if (feature.id && feature.properties) {
             popUp = `<b>${(feature.properties["recycling_type"] || "unknown").toUpperCase()}</b>: <a href=http://openstreetmap.org/${feature.id} target="_blank" rel="noopener noreferrer">${feature.id}</a><ul>`
             if (feature.properties["fixme"]) {
-                popUp += `<p> <b>! ${feature.properties["fixme"]} !</b></p>`
+                popUp += `<p class="warning"> <b>! ${feature.properties["fixme"]} !</b></p>`
             }
             for (prop in feature.properties) {
                 popUp += `<li>${prop}: ${feature.properties[prop]}</li>`
