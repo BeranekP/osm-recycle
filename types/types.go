@@ -1,6 +1,13 @@
-package main
+package types
 
 import "time"
+
+type Config struct {
+	Geocode  int      `json:"geoCode"`
+	Timeout  int      `json:"timeOut"`
+	Tags     []string `json:"tags"`
+	Colors   []string `json:"colors"`
+}
 
 type Status struct {
 	NoAmenity   bool `json:"noAmenity"`
@@ -66,13 +73,13 @@ type GeoContainer struct {
 }
 
 type CheckedData struct {
-	missingRecycling GeoJson
-	missingType      GeoJson
-	missingAmenity   GeoJson
-	suspiciousTags   GeoJson
-	suspiciousColor  GeoJson
-	withAddress      GeoJson
-	fixMe            GeoJson
+	MissingRecycling GeoJson `json:"missingRecycling"`
+	MissingType      GeoJson `json:"missingType"`
+	MissingAmenity   GeoJson `json:"missingAmenity"`
+	SuspiciousTags   GeoJson `json:"suspiciousTags"`
+	SuspiciousColor  GeoJson `json:"suspiciousColor"`
+	WithAddress      GeoJson `json:"withAddress"`
+	FixMe            GeoJson `json:"fixMe"`
 	Stats            Stats
 	Users            []User
 }

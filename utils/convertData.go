@@ -1,23 +1,24 @@
-package main
+package utils
 
 import (
 	"encoding/json"
+	"github.com/BeranekP/osm-recycle/types"
 	"log"
 	"os"
 	"path/filepath"
 )
 
-func ConvertData() {
+func ConvertData(config types.Config) {
 	log.Println("Converting JSON to GeoJSON")
 
 	path, _ := filepath.Abs("data/containers.json.gz")
 	if _, err := os.Stat(path); err != nil {
 		log.Printf("File %s not found, fetching", path)
-		FetchData()
+		FetchData(config)
 	}
 
 	source := DecompressData("data/containers.json.gz")
-	var r ResponseData
+	var r types.ResponseData
 
 	err := json.Unmarshal(source, &r)
 	if err != nil {

@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"bytes"
@@ -13,10 +13,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/BeranekP/osm-recycle/types"
 	"github.com/joho/godotenv"
 )
 
 func Update(w http.ResponseWriter, r *http.Request) {
+    log.Println("Loading current config")
+    config := LoadConfig("config/config.json")
+    log.Println("Config loaded")
 	if r.Method == "POST" {
 
 		err := godotenv.Load()
@@ -35,9 +39,9 @@ func Update(w http.ResponseWriter, r *http.Request) {
 			systok := os.Getenv("TOKEN")
 			valid := hashed == systok
 			if valid {
-				FetchData()
-				ConvertData()
-				ValidateData()
+				FetchData(config)
+				ConvertData(config)
+				ValidateData(config)
 				fmt.Fprint(w, http.StatusOK)
 				fmt.Println("--------------------")
 				return
@@ -58,12 +62,11 @@ func ServeData() {
 	}
 	port := os.Getenv("PORT")
 
-    if port == "" {
-        port = "3333"
-    }
-    
+	if port == "" {
+		port = "3333"
+	}
 
-    log.Printf("Serving data on http://localhost:%s/", port)
+	log.Printf("Serving data on http://localhost:%s/", port)
 	gjson := http.FileServer(http.Dir("./data"))
 	html := http.FileServer(http.Dir("./html"))
 	http.Handle("/geojson/", http.StripPrefix("/geojson", gjson))
@@ -74,36 +77,33 @@ func ServeData() {
 
 }
 
-func ValidateData() {
+func ValidateData(config types.Config) {
 
-	var data GeoJson
+	var data types.GeoJson
 	raw_data := DecompressData("data/containers.geojson.gz")
 
-
-    err := json.Unmarshal(raw_data, &data)
+	err := json.Unmarshal(raw_data, &data)
 
 	if err != nil {
 		log.Fatal("Error parsing GeoJSON:", err)
 	}
 
-	checked := setValid(&data)
-//	file, _ := json.Marshal(data)
+	checked := setValid(&data, config)
+	//	file, _ := json.Marshal(data)
 
-  //  CompressData(file,"data/containers.geojson.gz" )
+	//  CompressData(file,"data/containers.geojson.gz" )
 
-
-
-	missingRecycling, _ := json.Marshal(checked.missingRecycling)
-	suspicousTags, _ := json.Marshal(checked.suspiciousTags)
-	suspicousColor, _ := json.Marshal(checked.suspiciousColor)
-	withAddress, _ := json.Marshal(checked.withAddress)
-	fixMe, _ := json.Marshal(checked.fixMe)
+	missingRecycling, _ := json.Marshal(checked.MissingRecycling)
+	suspicousTags, _ := json.Marshal(checked.SuspiciousTags)
+	suspicousColor, _ := json.Marshal(checked.SuspiciousColor)
+	withAddress, _ := json.Marshal(checked.WithAddress)
+	fixMe, _ := json.Marshal(checked.FixMe)
 	stats, _ := json.Marshal(checked.Stats)
 	users, _ := json.Marshal(checked.Users)
-	missingType, _ := json.Marshal(checked.missingType)
-	missingAmenity, _ := json.Marshal(checked.missingAmenity)
+	missingType, _ := json.Marshal(checked.MissingType)
+	missingAmenity, _ := json.Marshal(checked.MissingAmenity)
 
-	output := OutputData{
+	output := types.OutputData{
 		"missingRecycling": missingRecycling,
 		"missingType":      missingType,
 		"missingAmenity":   missingAmenity,
@@ -112,34 +112,33 @@ func ValidateData() {
 		"withAddress":      withAddress,
 		"fixMe":            fixMe,
 		"stats":            stats,
-        "users":            users,
+		"users":            users,
 	}
 	for k, v := range output {
 		partial := fmt.Sprintf("data/%s.geojson.gz", k)
-		if k == "stats" || k == "users"{
+		if k == "stats" || k == "users" {
 			partial = fmt.Sprintf("data/%s.json.gz", k)
 		}
-        CompressData(v, partial)
+		CompressData(v, partial)
 		//filePath, _ := filepath.Abs(partial)
 		//os.WriteFile(filePath, v, 0644)
 
 	}
 }
 func FilesExist() bool {
-    data, _ := filepath.Abs("data")
-    if _, err := os.Stat(data); err != nil{
-        if err = os.Mkdir("data", 0644); err != nil{
-            log.Fatal("Data directory not found, error creating: ", err)
-        }
-    }
-
+	data, _ := filepath.Abs("data")
+	if _, err := os.Stat(data); err != nil {
+		if err = os.Mkdir("data", 0644); err != nil {
+			log.Fatal("Data directory not found, error creating: ", err)
+		}
+	}
 
 	var validated []string = []string{"containers", "missingType", "missingRecycling", "missingAmenity", "withAddress", "fixMe", "suspiciousTags", "suspiciousColor"}
 
 	for _, file := range validated {
 		path := fmt.Sprintf("data/%s.geojson.gz", file)
 		path, _ = filepath.Abs(path)
-        if _, err := os.Stat(path); err != nil {
+		if _, err := os.Stat(path); err != nil {
 			log.Printf("File %s not found", path)
 			return false
 		}
@@ -155,20 +154,20 @@ func FilesExist() bool {
 
 }
 
-func Json2GeoJson(r ResponseData) GeoJson {
-	output := GeoJson{Type: "FeatureCollection"}
-	features := []GeoContainer{}
+func Json2GeoJson(r types.ResponseData) types.GeoJson {
+	output := types.GeoJson{Type: "FeatureCollection"}
+	features := []types.GeoContainer{}
 
 	for i := range r.Elements {
 		container := &r.Elements[i]
-		geoContainer := GeoContainer{Type: "Feature"}
+		geoContainer := types.GeoContainer{Type: "Feature"}
 		geoContainer.Id = fmt.Sprintf("%s/%d", container.Type, container.Id)
 		geoContainer.Geometry.Type = "Point"
 		geoContainer.Properties = container.Tags
-        geoContainer.User = container.User
-        geoContainer.Uid = container.Uid
-        geoContainer.Timestamp = container.Timestamp
-        geoContainer.Version = container.Version
+		geoContainer.User = container.User
+		geoContainer.Uid = container.Uid
+		geoContainer.Timestamp = container.Timestamp
+		geoContainer.Version = container.Version
 
 		if container.Type == "node" {
 			geoContainer.Geometry.Coordinates = []float32{container.Lon, container.Lat}
@@ -183,47 +182,46 @@ func Json2GeoJson(r ResponseData) GeoJson {
 
 }
 
-
-func CompressData(jsonBytes []byte, outPath string){
+func CompressData(jsonBytes []byte, outPath string) {
 
 	gzPath, _ := filepath.Abs(outPath)
-    //_, err := os.OpenFile(gzPath, os.O_CREATE, 0666)
+	//_, err := os.OpenFile(gzPath, os.O_CREATE, 0666)
 	//if err != nil {
-//		log.Fatal(err)
-//	}
+	//		log.Fatal(err)
+	//	}
 
-    var fileGZ bytes.Buffer
+	var fileGZ bytes.Buffer
 	zipper := gzip.NewWriter(&fileGZ)
 
-    _, err := zipper.Write(jsonBytes)
+	_, err := zipper.Write(jsonBytes)
 	if err != nil {
-        log.Fatal("GZIP error: ", err)
+		log.Fatal("GZIP error: ", err)
 	}
-    zipper.Close()
-    os.WriteFile(gzPath, fileGZ.Bytes(), 0644)
+	zipper.Close()
+	os.WriteFile(gzPath, fileGZ.Bytes(), 0644)
 
 }
 
-func DecompressData(path string) []byte{
-    abs_path , _ := filepath.Abs(path)
-    log.Println("Decompressing file: ", abs_path)
-    zippped, err := os.ReadFile(abs_path)
+func DecompressData(path string) []byte {
+	abs_path, _ := filepath.Abs(path)
+	log.Println("Decompressing file: ", abs_path)
+	zippped, err := os.ReadFile(abs_path)
 	if err != nil {
-        log.Fatal("ReadFile: ", err)
+		log.Fatal("ReadFile: ", err)
 	}
 
-    unzipped, err := gzip.NewReader(bytes.NewReader(zippped))
+	unzipped, err := gzip.NewReader(bytes.NewReader(zippped))
 
-    if err != nil {
-        log.Fatal("Error decompressing: ", err)
+	if err != nil {
+		log.Fatal("Error decompressing: ", err)
 	}
-    //var output []byte
-    output, err := io.ReadAll(unzipped)
-    //_, err = unzipped.Read(output)
-    if err != nil{
-        log.Fatal("Error reading unzipped: ", err)
-    }
+	//var output []byte
+	output, err := io.ReadAll(unzipped)
+	//_, err = unzipped.Read(output)
+	if err != nil {
+		log.Fatal("Error reading unzipped: ", err)
+	}
 
-    unzipped.Close()
-    return output   
+	unzipped.Close()
+	return output
 }

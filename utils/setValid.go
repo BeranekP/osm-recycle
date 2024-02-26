@@ -1,25 +1,26 @@
-package main
+package utils
 
 import (
+	"github.com/BeranekP/osm-recycle/types"
 	"log"
 	"slices"
 	"strings"
 	"time"
 )
 
-func setValid(data *GeoJson) CheckedData {
+func setValid(data *types.GeoJson, config types.Config) types.CheckedData {
 	log.Println("Validating data")
 
-	missingRecycling := GeoJson{Type: "FeatureCollection"}
-	suspiciousTags := GeoJson{Type: "FeatureCollection"}
-	suspiciousColor := GeoJson{Type: "FeatureCollection"}
-	withAddress := GeoJson{Type: "FeatureCollection"}
-	fixMe := GeoJson{Type: "FeatureCollection"}
-	missingType := GeoJson{Type: "FeatureCollection"}
-	missingAmenity := GeoJson{Type: "FeatureCollection"}
-	users := make(map[int]*User)
+	missingRecycling := types.GeoJson{Type: "FeatureCollection"}
+	suspiciousTags := types.GeoJson{Type: "FeatureCollection"}
+	suspiciousColor := types.GeoJson{Type: "FeatureCollection"}
+	withAddress := types.GeoJson{Type: "FeatureCollection"}
+	fixMe := types.GeoJson{Type: "FeatureCollection"}
+	missingType := types.GeoJson{Type: "FeatureCollection"}
+	missingAmenity := types.GeoJson{Type: "FeatureCollection"}
+	users := make(map[int]*types.User)
 
-	var stats Stats
+	var stats types.Stats
 	stats.Timestamp = time.Now().UnixMilli()
 
 	for i := range data.Features {
@@ -28,7 +29,7 @@ func setValid(data *GeoJson) CheckedData {
 		_, ok := users[container.Uid]
 		valid := true
 		if !ok {
-			users[container.Uid] = &User{Name: container.User, Id: container.Uid}
+			users[container.Uid] = &types.User{Name: container.User, Id: container.Uid}
 		}
 
 		user, _ := users[container.Uid]
@@ -64,7 +65,7 @@ func setValid(data *GeoJson) CheckedData {
 			valid = false
 		}
 
-		if !validKeys(container.Properties, container) {
+		if !validKeys(container.Properties, container, config) {
 			if container.Properties["recycling_type"] == "centre" && (container.Properties["barrier"] == "fence" || container.Properties["barrier"] == "wall") {
 				if container.Suspicious == "fence" {
 					container.Suspicious = ""
@@ -78,7 +79,7 @@ func setValid(data *GeoJson) CheckedData {
 			}
 		}
 		if container.Properties["colour"] != "" {
-			if !validColor(container.Properties["colour"]) {
+			if !validColor(container.Properties["colour"], config) {
 				suspiciousColor.Features = append(suspiciousColor.Features, *container)
 			}
 		}
@@ -108,35 +109,30 @@ func setValid(data *GeoJson) CheckedData {
 
 		}
 	}
-	var user_arr []User
+	var user_arr []types.User
 	for _, v := range users {
 		user_arr = append(user_arr, *v)
 
 	}
-	return CheckedData{missingRecycling, missingType, missingAmenity, suspiciousTags, suspiciousColor, withAddress, fixMe, stats, user_arr}
+	return types.CheckedData{
+		MissingRecycling: missingRecycling,
+		MissingType:      missingType,
+		MissingAmenity:   missingAmenity,
+		SuspiciousTags:   suspiciousTags,
+		SuspiciousColor:  suspiciousColor,
+		WithAddress:      withAddress,
+		FixMe:            fixMe,
+		Stats:            stats,
+		Users:            user_arr}
 }
 
-func validKeys(props map[string]string, c *GeoContainer) bool {
-	valid := []string{"amenity", "recycling_type", "name", "location", "operator",
-		"opening_hours", "id", "access", "source", "covered", "wheelchair",
-		"description", "check_date:recycling", "ref", "indoor", "collection_times",
-		"colour", "check_date", "source:amenity", "website", "note", "material",
-		"operator:website", "temporary", "mapillary", "operator:type", "email", "fixme",
-		"phone", "mobile", "landuse", "image", "start_date", "fee", "industrial", "level", "count", "charity", "layer"}
+func validKeys(props map[string]string, c *types.GeoContainer, config types.Config) bool {
+	valid := config.Tags
+
 	for key, _ := range props {
-		if !(strings.HasPrefix(key, "recycling:") ||
-			slices.Contains(valid, key) ||
-			strings.HasPrefix(key, "collection_times:") ||
-			strings.HasPrefix(key, "ref:") ||
-			strings.HasPrefix(key, "description:") ||
-			strings.HasPrefix(key, "addr:") ||
-			strings.HasPrefix(key, "name:") ||
-			strings.HasPrefix(key, "contact:") ||
-			strings.HasPrefix(key, "ipr:") ||
-			strings.HasPrefix(key, "survey:") ||
-			strings.HasPrefix(key, "source:") ||
-			strings.HasPrefix(key, "check_date:") ||
-			strings.HasPrefix(key, "payment:")) {
+        prefixSuffix := strings.Split(key, ":")
+        prefix := prefixSuffix[0]
+		if !slices.Contains(valid, prefix) {
 			//fmt.Println(key, value)
 			c.Suspicious += key
 			return false
@@ -147,8 +143,8 @@ func validKeys(props map[string]string, c *GeoContainer) bool {
 
 }
 
-func validColor(color string) bool {
-	valid := []string{"red", "blue", "green", "brown", "yellow", "white", "orange", "gray"}
+func validColor(color string, config types.Config) bool {
+	valid := config.Colors
 	colors := strings.Split(color, ";")
 	count := 0
 	for _, c := range colors {

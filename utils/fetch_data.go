@@ -1,8 +1,9 @@
-package main
+package utils
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/BeranekP/osm-recycle/types"
 	"io"
 	"log"
 	"net/http"
@@ -10,12 +11,11 @@ import (
 	"strings"
 )
 
-func FetchData() {
+func FetchData(config types.Config) {
 	client := http.Client{}
-	timeout := 60
-	geocodes := getGeocodes()
-	id := geocodes.CZ
-    query := fmt.Sprintf(`[out:json][timeout:%d];
+	timeout := config.Timeout
+	id := config.Geocode
+	query := fmt.Sprintf(`[out:json][timeout:%d];
                 area(id:%d)->.searchArea;
                 (nwr[~"^recycling:.*$"~"."](area.searchArea);
                 nwr["amenity"="recycling"](area.searchArea);
@@ -45,7 +45,7 @@ func FetchData() {
 	}
 
 	//fmt.Println(string(payload))
-	var containers ResponseData
+	var containers types.ResponseData
 	err = json.Unmarshal(payload, &containers)
 	if err != nil {
 		log.Fatal("Error parsing data:", err)
@@ -54,7 +54,7 @@ func FetchData() {
 	log.Println("Saving data")
 	file, _ := json.Marshal(containers)
 	//target, _ := filepath.Abs("data/containers.json")
-    CompressData(file, "data/containers.json.gz")
+	CompressData(file, "data/containers.json.gz")
 	//err = os.WriteFile(target, file, 0644)
 	//if err != nil {
 	//	log.Fatal("Error writing file: ", err)

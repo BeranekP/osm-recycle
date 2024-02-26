@@ -23,11 +23,13 @@ builds:
       - windows
     goarch:
       - amd64
+    main: "./app"
 
 archives:
   - format: tar.gz
     files:
         - html/*
+        - config/*  
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
