@@ -18,35 +18,33 @@ import (
 )
 
 func Update(w http.ResponseWriter, r *http.Request) {
-    log.Println("Loading current config")
-    config := LoadConfig("config/config.json")
-    log.Println("Config loaded")
-	if r.Method == "POST" {
+	log.Println("Loading current config")
+	config := LoadConfig("config/config.json")
+	log.Println("Config loaded")
 
-		err := godotenv.Load()
-		if err != nil {
-			log.Println(".env not found using system")
-		}
+	err := godotenv.Load()
+	if err != nil {
+		log.Println(".env not found using system")
+	}
 
-		fmt.Println("--------------------")
-		log.Println("Updating data")
-		token := r.FormValue("token")
-		if token != "" {
-			hasher := sha512.New()
-			hasher.Write([]byte(token))
-			hashed := hex.EncodeToString(hasher.Sum(nil))
+	fmt.Println("--------------------")
+	log.Println("Updating data")
+	token := r.FormValue("token")
+	if token != "" {
+		hasher := sha512.New()
+		hasher.Write([]byte(token))
+		hashed := hex.EncodeToString(hasher.Sum(nil))
 
-			systok := os.Getenv("TOKEN")
-			valid := hashed == systok
-			if valid {
-				FetchData(config)
-				ConvertData(config)
-				ValidateData(config)
-				fmt.Fprint(w, http.StatusOK)
-				fmt.Println("--------------------")
-				return
+		systok := os.Getenv("TOKEN")
+		valid := hashed == systok
+		if valid {
+			FetchData(config)
+			ConvertData(config)
+			ValidateData(config)
+			fmt.Fprint(w, http.StatusOK)
+			fmt.Println("--------------------")
+			return
 
-			}
 		}
 	}
 	log.Println("Invalid request")
@@ -66,14 +64,16 @@ func ServeData() {
 		port = "3333"
 	}
 
-	log.Printf("Serving data on http://localhost:%s/", port)
+	mux := http.NewServeMux()
 	gjson := http.FileServer(http.Dir("./data"))
 	html := http.FileServer(http.Dir("./html"))
-	http.Handle("/geojson/", http.StripPrefix("/geojson", gjson))
-	http.Handle("/", html)
-	http.HandleFunc("/update", Update)
+	mux.Handle("/geojson/", http.StripPrefix("/geojson", gjson))
+	mux.Handle("/", html)
+	mux.HandleFunc("POST /update", Update)
 	server := fmt.Sprintf(":%s", port)
-	log.Fatal(http.ListenAndServe(server, nil))
+
+	log.Printf("Serving data on http://localhost:%s/", port)
+	log.Fatal(http.ListenAndServe(server, mux))
 
 }
 

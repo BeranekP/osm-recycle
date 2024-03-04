@@ -54,6 +54,7 @@
         "survey",
         "ipr",
         "contact",
-        "addr"
+        "addr",
+        "surface"
     ]
 }
