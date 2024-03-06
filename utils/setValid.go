@@ -1,11 +1,13 @@
 package utils
 
 import (
-	"github.com/BeranekP/osm-recycle/types"
+	"fmt"
 	"log"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/BeranekP/osm-recycle/types"
 )
 
 func setValid(data *types.GeoJson, config types.Config) types.CheckedData {
@@ -134,10 +136,16 @@ func validKeys(props map[string]string, c *types.GeoContainer, config types.Conf
 		prefix := prefixSuffix[0]
 		suffix := ""
 		if len(prefixSuffix) > 1 {
-			suffix += prefixSuffix[1]
+			suffix = prefixSuffix[1]
+
 		}
-		if prefix == "recycling" && suffix == "metal" {
-			c.Suspicious += "recycling:metal -> scrap_metal"
+		if slices.Contains(config.Bad, key) {
+			c.Suspicious += key
+			return false
+		}
+
+		if prefix == "recycling" && !slices.Contains(config.Common, suffix) {
+			c.Suspicious += fmt.Sprintf("%s:%s", prefix, suffix)
 			return false
 		}
 		if !slices.Contains(valid, prefix) {

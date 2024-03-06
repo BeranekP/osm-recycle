@@ -3,10 +3,12 @@ package types
 import "time"
 
 type Config struct {
-	Geocode  int      `json:"geoCode"`
-	Timeout  int      `json:"timeOut"`
-	Tags     []string `json:"tags"`
-	Colors   []string `json:"colors"`
+	Geocode int      `json:"geoCode"`
+	Timeout int      `json:"timeOut"`
+	Tags    []string `json:"tags"`
+	Bad     []string `json:"bad"`
+	Common  []string `json:"common"`
+	Colors  []string `json:"colors"`
 }
 
 type Status struct {
