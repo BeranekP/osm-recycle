@@ -130,8 +130,16 @@ func validKeys(props map[string]string, c *types.GeoContainer, config types.Conf
 	valid := config.Tags
 
 	for key, _ := range props {
-        prefixSuffix := strings.Split(key, ":")
-        prefix := prefixSuffix[0]
+		prefixSuffix := strings.Split(key, ":")
+		prefix := prefixSuffix[0]
+		suffix := ""
+		if len(prefixSuffix) > 1 {
+			suffix += prefixSuffix[1]
+		}
+		if prefix == "recycling" && suffix == "metal" {
+			c.Suspicious += "recycling:metal -> scrap_metal"
+			return false
+		}
 		if !slices.Contains(valid, prefix) {
 			//fmt.Println(key, value)
 			c.Suspicious += key
