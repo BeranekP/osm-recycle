@@ -334,7 +334,7 @@
                 popUp += `<li>${prop}: ${feature.properties[prop]}</li>`
             }
             if (feature.suspicious) {
-                popUp += `<li> suspicious:<b> ${feature.suspicious} </b></li>`
+                popUp += `<li class="warning"> suspicious:<b> ${makeUl(feature.suspicious)} </b></li>`
             }
             if (feature.user) {
                 popUp += `<li> user:<b> <a href="http://openstreetmap.org/user/${feature.user}">${feature.user}</b></a><i>`
@@ -348,11 +348,20 @@
         }
     }
 
+    function makeUl(arr){
+        ul = "<ul>"
+        for (item of arr){
+            ul += `<li style="list-style-type: none;">${item}</li>`
+        
+        }
+        ul += "</ul>"
+
+        return ul
+    }
 
 
 
 
-
-</SCript>
+</script>
 
 </html>

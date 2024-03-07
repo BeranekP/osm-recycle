@@ -66,7 +66,7 @@ type GeoContainer struct {
 	Id         string            `json:"id"`
 	Properties map[string]string `json:"properties"`
 	Geometry   Geometry          `json:"geometry"`
-	Suspicious string            `json:"suspicious"`
+	Suspicious []string            `json:"suspicious"`
 	User       string            `json:"user,omitempty"`
 	Uid        int               `json:"uid,omitempty"`
 	Timestamp  time.Time         `json:"timestamp,omitempty"`

@@ -68,17 +68,11 @@ func setValid(data *types.GeoJson, config types.Config) types.CheckedData {
 		}
 
 		if !validKeys(container.Properties, container, config) {
-			if container.Properties["recycling_type"] == "centre" && (container.Properties["barrier"] == "fence" || container.Properties["barrier"] == "wall") {
-				if container.Suspicious == "fence" {
-					container.Suspicious = ""
-				}
-			} else if container.Properties["recycling_type"] == "centre" && container.Properties["building"] != "" {
-				if container.Suspicious == "building" {
-					container.Suspicious = ""
-				}
-			} else {
+
+			if len(container.Suspicious) > 0 {
 				suspiciousTags.Features = append(suspiciousTags.Features, *container)
 			}
+
 		}
 		if container.Properties["colour"] != "" {
 			if !validColor(container.Properties["colour"], config) {
@@ -132,7 +126,7 @@ func validKeys(props map[string]string, c *types.GeoContainer, config types.Conf
 	valid := config.Tags
 
 	for key, _ := range props {
-		prefixSuffix := strings.Split(key, ":")
+		prefixSuffix := strings.SplitN(key, ":", 2)
 		prefix := prefixSuffix[0]
 		suffix := ""
 		if len(prefixSuffix) > 1 {
@@ -140,20 +134,29 @@ func validKeys(props map[string]string, c *types.GeoContainer, config types.Conf
 
 		}
 		if slices.Contains(config.Bad, key) {
-			c.Suspicious += key
-			return false
+			c.Suspicious = append(c.Suspicious, key)
 		}
 
 		if prefix == "recycling" && !slices.Contains(config.Common, suffix) {
-			c.Suspicious += fmt.Sprintf("%s:%s", prefix, suffix)
-			return false
+			c.Suspicious = append(c.Suspicious, key)
 		}
 		if !slices.Contains(valid, prefix) {
-			//fmt.Println(key, value)
-			c.Suspicious += key
-			return false
+			if c.Properties["recycling_type"] == "centre" && (c.Properties["barrier"] == "fence" || c.Properties["barrier"] == "wall") {
+				if prefix == "fence_type" || prefix == "barrier" {
+					continue
+				}
+			}
+			if c.Properties["recycling_type"] == "centre" && c.Properties["building"] != "" {
+				if prefix == "building" {
+					continue
+				}
+			}
+			c.Suspicious = append(c.Suspicious, key)
 		}
 
+	}
+	if len(c.Suspicious) > 0 {
+		return false
 	}
 	return true
 
@@ -180,5 +183,15 @@ func hasAddress(props map[string]string) bool {
 		}
 	}
 	return false
+
+}
+
+func find[T comparable](item T, slice []T) (int, error) {
+	for i, v := range slice {
+		if v == item {
+			return i, nil
+		}
+	}
+	return -1, fmt.Errorf("%v not found", item)
 
 }
